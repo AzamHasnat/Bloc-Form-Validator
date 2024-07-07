@@ -1,5 +1,10 @@
+import 'package:bloc_form_validation/screens/sign_in/bloc/sign_in_bloc.dart';
+import 'package:bloc_form_validation/screens/sign_in/bloc/sign_in_event.dart';
+import 'package:bloc_form_validation/screens/sign_in/bloc/sign_in_state.dart';
+import 'package:bloc_form_validation/screens/welcome/welcome_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -9,11 +14,23 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Sign In',style: TextStyle(color: Colors.white),),
+          title: const Text(
+            'Sign In',
+            style: TextStyle(color: Colors.white),
+          ),
           centerTitle: true,
           elevation: 0,
           backgroundColor: Colors.blue,
@@ -21,7 +38,12 @@ class _SigninScreenState extends State<SigninScreen> {
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const WelcomeScreen()));
+            },
           ),
           actions: [
             IconButton(
@@ -54,27 +76,63 @@ class _SigninScreenState extends State<SigninScreen> {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             children: [
-              const Text(
-                'Error will be shown up here',
-                style: TextStyle(color: Colors.red),
+              BlocBuilder<SignInBloc, SignInState>(
+                builder: (context, state) {
+                  if (state is SignInErrorState) {
+                    return Text(
+                      state.errorMessage,
+                      style: TextStyle(color: Colors.red),
+                    );
+                  } else {
+                    return Container();
+                  }
+                },
               ),
               const SizedBox(height: 10),
-              const TextField(
+              TextField(
+                controller: emailController,
+                onChanged: (val) {
+                  BlocProvider.of<SignInBloc>(context).add(
+                      SignInTextChangdEvent(emailController.text.trim(),
+                          passwordController.text.trim()));
+                },
                 decoration: InputDecoration(
                   labelText: 'Email Address',
                 ),
               ),
               const SizedBox(height: 10),
-              const TextField(
+              TextField(
+                controller: passwordController,
+                onChanged: (val) {
+                  BlocProvider.of<SignInBloc>(context).add(
+                      SignInTextChangdEvent(emailController.text.trim(),
+                          passwordController.text.trim()));
+                },
                 decoration: InputDecoration(
                   labelText: 'Password',
                 ),
               ),
               const SizedBox(height: 20),
-              CupertinoButton(
-                  color: Colors.grey.shade400,
-                  child: const Text('Sign In'),
-                  onPressed: () {})
+              BlocBuilder<SignInBloc, SignInState>(
+                builder: (context, state) {
+                  if (state is SignInLoadingState) {
+                    return Center(child: CircularProgressIndicator());
+                    
+                  }
+                  return CupertinoButton(
+                      color: (state is SignInValidState)
+                          ? Colors.blue
+                          : Colors.grey.shade400,
+                      child: const Text('Sign In'),
+                      onPressed: () {
+                        if (state is SignInValidState) {
+                          BlocProvider.of<SignInBloc>(context).add(
+                              SignInSubmittedEvent(emailController.text.trim(),
+                                  passwordController.text.trim()));
+                        }
+                      });
+                },
+              )
             ],
           ),
         )));

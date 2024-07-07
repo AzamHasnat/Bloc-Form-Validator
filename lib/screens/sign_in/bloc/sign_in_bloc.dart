@@ -6,8 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class SignInBloc extends Bloc<SignInEvent, SignInState> {
   SignInBloc() : super(SignInInitialState()) {
     on<SignInTextChangdEvent>((event, emit) {
-      if (event.emailValue == "" &&
-          EmailValidator.validate(event.emailValue) == false) {
+      if (EmailValidator.validate(event.emailValue) == false) {
         emit(SignInErrorState("Please enter a valid email address"));
       } else if (event.passwordValue.length <= 6) {
         emit(SignInErrorState("Please enter a valid password"));
